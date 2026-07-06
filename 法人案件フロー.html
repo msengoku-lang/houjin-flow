@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Dr. 法人案件フロー</title>
+<style>
+  :root {
+    --blue:   #5EB7E8;
+    --green:  #52B8BA;
+    --dark:   #3E3A39;
+    --text:   #2C2C2C;
+    --bg:     #F1F0EE;
+    --gray:   #9FA0A0;
+    --white:  #FFFFFF;
+    --phase1: #5EB7E8;
+    --phase2: #52B8BA;
+    --phase3: #7B8FCE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--dark);
+    color: var(--white);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: .05em; }
+  header p { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .logo-mark {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; color: #fff; font-size: 16px; flex-shrink: 0;
+  }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    padding: 12px 32px;
+    background: var(--white);
+    border-bottom: 1px solid #ddd;
+    font-size: 11px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; white-space: nowrap;
+  }
+  .badge-sheet  { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .badge-ledger { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
+  .badge-cloud  { background: #FFF3E0; color: #E65100; border: 1px solid #FFCC80; }
+  .badge-ai     { background: #F3E5F5; color: #6A1B9A; border: 1px solid #CE93D8; }
+  .badge-pr     { background: #FFF8E1; color: #F57F17; border: 1px solid #FFE082; }
+  .badge-report { background: #E8EAF6; color: #283593; border: 1px solid #9FA8DA; }
+  .badge-mktg   { background: #FCE4EC; color: #C2457C; border: 1px solid #F48FB1; }
+
+  .phases {
+    display: flex;
+    gap: 0;
+    padding: 28px 28px;
+    align-items: flex-start;
+  }
+  .phase { flex: 1; position: relative; }
+  .phase + .phase { margin-left: 16px; }
+
+  .phase-header {
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    color: var(--white);
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: .03em;
+  }
+  .phase-header .num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+  }
+  .ph1 { background: var(--phase1); }
+  .ph2 { background: var(--phase2); }
+  .ph3 { background: var(--phase3); }
+
+  .phase-body {
+    background: var(--white);
+    border: 2px solid;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+  }
+  .phase:nth-child(1) .phase-body { border-color: var(--phase1); }
+  .phase:nth-child(3) .phase-body { border-color: var(--phase2); }
+  .phase:nth-child(5) .phase-body { border-color: var(--phase3); }
+
+  .step { padding: 14px 16px; border-bottom: 1px solid var(--bg); position: relative; }
+  .step:last-child { border-bottom: none; }
+
+  .step-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px; flex-shrink: 0;
+    color: var(--white);
+  }
+  .c1 { background: var(--phase1); }
+  .c2 { background: var(--phase2); }
+  .c3 { background: var(--phase3); }
+
+  .step-title { font-weight: 700; font-size: 13px; color: var(--dark); line-height: 1.4; padding-top: 3px; }
+  .step-title .sub { font-size: 10px; font-weight: 400; color: var(--gray); display: block; margin-top: 1px; }
+
+  .step-body { padding-left: 36px; }
+  .section-label {
+    font-size: 10px; font-weight: 700; color: var(--gray);
+    text-transform: uppercase; letter-spacing: .06em; margin: 6px 0 3px;
+  }
+  .action-list { list-style: none; padding: 0; }
+  .action-list li { font-size: 12px; color: var(--text); padding: 2px 0 2px 14px; position: relative; }
+  .action-list li::before { content: '→'; position: absolute; left: 0; color: var(--gray); font-size: 10px; }
+
+  .badges-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+  .status-row {
+    background: var(--dark);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .status-item { display: flex; align-items: center; flex-shrink: 0; }
+  .status-bubble {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; color: var(--white); white-space: nowrap;
+  }
+  .s-new      { background: #78909C; }
+  .s-interest { background: #5EB7E8; }
+  .s-talk     { background: #29B6F6; }
+  .s-neg      { background: #52B8BA; }
+  .s-done     { background: #43A047; }
+  .s-active   { background: #7B8FCE; }
+  .s-pr       { background: #C2457C; }
+  .s-report   { background: #283593; }
+  .status-arrow { color: #666; font-size: 14px; padding: 0 4px; }
+  .status-title { font-size: 10px; color: var(--gray); text-align: center; margin-bottom: 3px; }
+
+  .phase-connector { display: flex; align-items: center; padding-top: 48px; flex-shrink: 0; }
+  .phase-connector svg { width: 28px; }
+
+  .notes-section {
+    margin: 0 28px 28px;
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    padding: 16px 20px;
+  }
+  .notes-section h3 { font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 8px; border-bottom: 2px solid var(--bg); padding-bottom: 6px; }
+  .notes-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 11px; }
+  .note-card { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+  .note-card h4 { font-size: 11px; font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+  .note-card table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .note-card td { padding: 2px 4px; vertical-align: top; border-bottom: 1px solid #ddd; }
+  .note-card td:first-child { font-weight: 700; width: 30%; color: var(--gray); }
+
+  .highlight { color: var(--phase2); font-weight: 700; }
+  .n-tag {
+    display: inline-block; background: #FFF8E1; color: #F57F17;
+    border: 1px solid #FFE082; border-radius: 4px;
+    font-size: 9px; font-weight: 700; padding: 0 5px; margin-left: 4px; vertical-align: middle;
+  }
+  .parallel-note {
+    font-size: 10px; color: #C2457C; background: #FCE4EC;
+    border-radius: 4px; padding: 3px 8px; margin: 6px 0 2px;
+    border-left: 3px solid #C2457C;
+  }
+
+  @media (max-width: 900px) {
+    .phases { flex-direction: column; }
+    .phase + .phase { margin-left: 0; margin-top: 12px; }
+    .phase-connector { display: none; }
+    .notes-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo-mark">C+</div>
+  <div>
+    <h1>Cloud Dr. 法人案件フロー</h1>
+    <p>交渉 → 契約・締結 → 運用　｜　v3.0　（2026-07）　N = 稼働開始日</p>
+  </div>
+</header>
+
+<!-- Status bar -->
+<div class="status-row">
+  <div style="font-size:10px;color:#888;margin-right:12px;white-space:nowrap;">ステータス推移</div>
+  <div class="status-item"><div><div class="status-title">STEP 1</div><div class="status-bubble s-new">初回接触</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 4</div><div class="status-bubble s-interest">先方興味あり</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 5</div><div class="status-bubble s-talk">商談中</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 6</div><div class="status-bubble s-neg">契約交渉中</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 9</div><div class="status-bubble s-done">契約済</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 12</div><div class="status-bubble s-active">稼働中</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 13</div><div class="status-bubble s-pr">PR配信</div></div></div>
+  <div class="status-arrow">›</div>
+  <div class="status-item"><div><div class="status-title">STEP 14〜</div><div class="status-bubble s-report">数値報告・継続</div></div></div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <strong style="font-size:11px;margin-right:4px;">記入凡例：</strong>
+  <div class="legend-item"><span class="badge badge-sheet">📋 案件管理一覧</span> CD_案件管理一覧（GSheet）</div>
+  <div class="legend-item"><span class="badge badge-ledger">📁 契約書類台帳</span> 取引先契約書類管理台帳（xlsx）</div>
+  <div class="legend-item"><span class="badge badge-cloud">✍️ クラウドサイン</span> 電子署名送付</div>
+  <div class="legend-item"><span class="badge badge-mktg">🎨 マーケ</span> マーケ・広報準備（PR実施案件）</div>
+  <div class="legend-item"><span class="badge badge-pr">📢 PR</span> プレスリリース（N+1目安）</div>
+  <div class="legend-item"><span class="badge badge-report">📊 数値報告</span> 利用状況レポート</div>
+  <div class="legend-item"><span class="badge badge-ai">🤖 AI活用</span> AI補助推奨</div>
+</div>
+
+<!-- Three-phase columns -->
+<div class="phases">
+
+  <!-- ── PHASE 1: 交渉 ── -->
+  <div class="phase">
+    <div class="phase-header ph1">
+      <div class="num">1</div>
+      <div>交渉フェーズ<span style="font-size:10px;font-weight:400;margin-left:6px;">N-70〜N-35　リード〜商談確定</span></div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c1">1</div>
+          <div class="step-title">リード獲得・初回接触 <span class="n-tag">N-70〜</span>
+            <span class="sub">流入元を特定し24h以内に一次返信</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>問い合わせフォーム受信確認</li>
+            <li>流入元を記録（フォーム/紹介/SNS/展示会等）</li>
+            <li>24h以内に一次返信メール送付</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 新規追加</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>企業名・業種・担当者名・流入元・最終コンタクト日</li>
+            <li class="highlight">ステータス → <strong>初回接触</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c1">2</div>
+          <div class="step-title">案件精査・振り分け
+            <span class="sub">事業モデル分類と優先度決定</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>事業モデル分類（自治体/健保/ホテル/学校 等）</li>
+            <li>Action優先度設定（P1〜P4）</li>
+            <li>ボール確認（CD側 or 先方側）</li>
+            <li>主担当アサイン</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>事業モデル・Action優先度・ボール・主担当</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c1">3</div>
+          <div class="step-title">アポイント調整・Slack設定
+            <span class="sub">日程調整と連絡チャンネル開設</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>Spirで日程調整URLを発行・送付</li>
+            <li>大型案件：Slack CH開設（#p_クラドク打合せ用-〇〇様）</li>
+            <li>通知先設定（pmo@cloud-dr.jp 等）</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>アポ可否・Slack CH URL</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c1">4</div>
+          <div class="step-title">初回MTG・ヒアリング <span class="n-tag">N-56〜</span>
+            <span class="sub">協業形態・予算・用途・希望納期を深掘り</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">事前準備</div>
+          <ul class="action-list">
+            <li>提案資料・想定問答集作成</li>
+            <span class="badge badge-ai" style="margin-left:14px;">🤖 AI活用</span>
+          </ul>
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>ヒアリング：協業形態 / 予算 / 対象ユーザー / 希望納期</li>
+            <li>患者データ取扱い範囲の確認</li>
+            <li>議事録作成・Slack展開</li>
+            <span class="badge badge-ai" style="margin-left:14px;">🤖 議事録AI</span>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>ステータス詳細・最終コンタクト日・コンタクト備考</li>
+            <li class="highlight">ステータス → <strong>先方興味あり</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c1">5</div>
+          <div class="step-title">追加提案・条件調整
+            <span class="sub">資料送付・価格交渉・事業モデル確定</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>追加提案資料作成・送付</li>
+            <li>価格・条件のすり合わせ</li>
+            <li>事業モデル・契約形態の方向性合意</li>
+            <li>受注可否の判断（不可の場合は保留/クローズ）</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>最新資料リンク・ステータス詳細・マイルストーン</li>
+            <li class="highlight">ステータス → <strong>商談中</strong></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="phase-connector">
+    <svg viewBox="0 0 28 40" fill="none">
+      <path d="M4 20 L22 20 M14 12 L22 20 L14 28" stroke="#9FA0A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- ── PHASE 2: 契約・締結 ── -->
+  <div class="phase">
+    <div class="phase-header ph2">
+      <div class="num">2</div>
+      <div>契約・締結フェーズ<span style="font-size:10px;font-weight:400;margin-left:6px;">N-35〜N-14　書類整備〜電子署名</span></div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c2">6</div>
+          <div class="step-title">契約パターン決定 <span class="n-tag">N-35〜</span>
+            <span class="sub">必要書類リストを確定</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">契約パターン選定</div>
+          <ul class="action-list">
+            <li>① 覚書＋NDA（有償）　→ 全書類必要</li>
+            <li>② 覚書0円＋NDA（無料検証）→ 金銭系書類は「―」</li>
+            <li>③ NDAのみ（用途確認中）→ 最小書類</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+            <span class="badge badge-ledger">📁 契約書類台帳 新規追加</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>台帳：No./取引先名/担当者/契約形態/契約パターン</li>
+            <li class="highlight">ステータス → <strong>契約交渉中</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c2">7</div>
+          <div class="step-title">NDA締結
+            <span class="sub">どちらのフォーマットか確認→電子署名</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>NDAフォーマット確認・精査</li>
+            <li>送付先メアド確認</li>
+            <li>クラウドサインで送付・締結確認</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-ledger">📁 契約書類台帳 更新</span>
+            <span class="badge badge-cloud">✍️ クラウドサイン</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>NDA欄：✕ → △（送付中）→ ◯（締結済）</li>
+            <li>最終更新日を更新</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c2">8</div>
+          <div class="step-title">書類収集
+            <span class="sub">有償案件のみ。無料期間・NDAのみは「―」</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">取引先 → CD</div>
+          <ul class="action-list">
+            <li>履歴事項全部証明（法務局発行）</li>
+          </ul>
+          <div class="section-label">CD → 取引先（記入依頼）</div>
+          <ul class="action-list">
+            <li>取引申請書（当社フォーマット送付・返送）</li>
+            <li>口座情報</li>
+            <li>セキュリティチェックシート（患者データ取扱時）</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-ledger">📁 契約書類台帳 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>各書類欄：✕ → △ → ◯ に都度更新</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c2">9</div>
+          <div class="step-title">覚書・契約書作成・クラウドサイン送付
+            <span class="sub">利用規約同意含む</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>料金覚書 / BPO定義書 / SLA / 契約書（本契約）作成</li>
+            <li>内容精査（必要に応じ弁護士 or AI）</li>
+            <span class="badge badge-ai" style="margin-left:14px;">🤖 内容精査AI</span>
+            <li>クラウドサイン送付（送付メール文面テンプレ使用）</li>
+            <li>利用規約同意確認：<br>
+              <span style="font-size:10px;color:#666;">法人利用規約 cloud-dr.jp/terms-of-corporation/<br>
+              ※覚書締結をもって同意とみなす</span>
+            </li>
+            <li>相手方署名確認・締結完了</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-ledger">📁 契約書類台帳 更新</span>
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+            <span class="badge badge-cloud">✍️ クラウドサイン</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>台帳：料金覚書◯ / 契約書◯ / 契約ステータス=締結完了</li>
+            <li>案件管理：受注=◯</li>
+            <li class="highlight">ステータス → <strong>契約済</strong></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="phase-connector">
+    <svg viewBox="0 0 28 40" fill="none">
+      <path d="M4 20 L22 20 M14 12 L22 20 L14 28" stroke="#9FA0A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- ── PHASE 3: 運用 ── -->
+  <div class="phase">
+    <div class="phase-header ph3">
+      <div class="num">3</div>
+      <div>運用フェーズ<span style="font-size:10px;font-weight:400;margin-left:6px;">N-28〜　マーケ・キックオフ〜継続管理・報告</span></div>
+    </div>
+    <div class="phase-body">
+
+      <!-- NEW: マーケ・広報準備 -->
+      <div class="step" style="background:#FFF5F9;">
+        <div class="step-header">
+          <div class="step-num c3">10</div>
+          <div class="step-title">マーケ・広報準備 <span class="n-tag">N-28〜</span>
+            <span class="sub">PR実施案件のみ。システム設定（STEP 11）と並行して進める</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="parallel-note">⚡ STEP 11（システム設定）と並行作業</div>
+          <div class="section-label">制作フェーズ</div>
+          <ul class="action-list">
+            <li>制作物の確認・担当者決め・概要作成（N-28〜）</li>
+            <li>制作物の制作開始 — LP・ポスター・etc（N-21〜）</li>
+          </ul>
+          <div class="section-label">広報フェーズ（N-14〜）</div>
+          <ul class="action-list">
+            <li>プレスリリース原稿作成（CD＋先方 共同）</li>
+            <span class="badge badge-ai" style="margin-left:14px;">🤖 AI活用</span>
+            <li>先方確認・修正・配信承認</li>
+            <li>配信スケジュール確定（N+1を基準に調整）</li>
+            <li>写真素材・ロゴ等の取り寄せ</li>
+          </ul>
+          <div class="badges-row">
+            <span class="badge badge-mktg">🎨 マーケ・デザイン室</span>
+            <span class="badge badge-pr">📢 PR 配信日=N+1目安</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c3">11</div>
+          <div class="step-title">システム設定・オンボーディング <span class="n-tag">N-14〜</span>
+            <span class="sub">referralCode / LP / QR / GA4 等</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>システム設計・パターン選定</li>
+            <li>referralCode発行・動作確認</li>
+            <li>LP・Web設定（パラメータ付きURL発行）</li>
+            <li>QRコード発行（オフライン用 / Web用 別々に）</li>
+            <li>UTMパラメータ設定・GA4/GTMでCV計測設定</li>
+            <li>GMOアカウント開設案内（必要時）</li>
+            <li>薬局マスタ登録（連携薬局がある場合）</li>
+            <li>大型案件：WBS作成・共有</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>ステータス詳細・最新資料リンク・マイルストーン</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c3">12</div>
+          <div class="step-title">稼働開始・動作確認 <span class="n-tag">N日</span>
+            <span class="sub">テスト完了後に本番リリース</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>学割・割引等のシステム動作テスト</li>
+            <li>referralCode経由で正常適用されるか確認</li>
+            <li>取引先へ稼働開始通知・案内資料送付</li>
+            <li>キャンペーン開始</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li class="highlight">ステータス → <strong>稼働中</strong></li>
+            <li>マイルストーン・ステータス詳細を更新</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step" style="background:#FFFDF5;">
+        <div class="step-header">
+          <div class="step-num c3">13</div>
+          <div class="step-title">プレスリリース配信・初動確認 <span class="n-tag">N+1目安</span>
+            <span class="sub">PR実施案件のみ。配信後の反応を速やかにモニタリング</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">配信</div>
+          <ul class="action-list">
+            <li>配信サービス（PR TIMES等）でリリース配信</li>
+            <li>両社SNS・Webサイトへの掲載・拡散</li>
+            <li>社内Slack / メールで関係者へ共有</li>
+          </ul>
+          <div class="section-label">初動モニタリング（配信後24〜72h）</div>
+          <ul class="action-list">
+            <li>サイトPV・流入元の変化を確認（GA4）</li>
+            <li>申込数・referralCode利用数の変化を確認</li>
+            <li>SNSメンション・リアクション確認</li>
+            <li>問い合わせ急増時の対応体制確認</li>
+          </ul>
+          <div class="badges-row">
+            <span class="badge badge-pr">📢 PR TIMES 等</span>
+            <span class="badge badge-report">📊 GA4 モニタリング</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c3">14</div>
+          <div class="step-title">定期数値報告 <span class="n-tag">N+30〜</span>
+            <span class="sub">月次 or 四半期。先方と頻度・フォーマットを合意</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">初回報告（N+30目安）</div>
+          <ul class="action-list">
+            <li>利用件数・CV数・referralCode経由の申込数</li>
+            <li>売上・入金状況（有償の場合）</li>
+            <li>PRの反応サマリー（PV・SNS等）</li>
+            <li>報告フォーマット・次回スケジュールを先方と合意</li>
+            <span class="badge badge-ai" style="margin-left:14px;">🤖 レポート自動化AI</span>
+          </ul>
+          <div class="section-label">定期報告（月次 or 四半期）</div>
+          <ul class="action-list">
+            <li>KPIレポート作成・送付</li>
+            <li>数値報告MTG（必要に応じ）</li>
+            <li>月次請求書発行・入金確認（有償）</li>
+          </ul>
+          <div class="badges-row">
+            <span class="badge badge-report">📊 数値報告</span>
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num c3">15</div>
+          <div class="step-title">振り返り・契約更新
+            <span class="sub">KPI確認・更新/アップセル/解約</span>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="section-label">アクション</div>
+          <ul class="action-list">
+            <li>KPI確認・振り返りMTG（半年〜1年後 / キャンペーン終了後等）</li>
+            <li>継続 / 更新 / アップセルの検討</li>
+            <li>契約更新の場合 → STEP 6〜9 に戻り再締結</li>
+            <li>解約の場合 → 解約合意書を取得・台帳に記録</li>
+          </ul>
+          <div class="section-label">記入</div>
+          <div class="badges-row">
+            <span class="badge badge-sheet">📋 案件管理一覧 更新</span>
+            <span class="badge badge-ledger">📁 契約書類台帳 更新</span>
+          </div>
+          <ul class="action-list" style="margin-top:4px;">
+            <li>メモ欄に振り返り内容・次期方針を記載</li>
+            <li>台帳備考：更新日・解約日等を記録</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /phases -->
+
+<!-- Notes section -->
+<div class="notes-section">
+  <h3>📎 補足情報</h3>
+  <div class="notes-grid">
+
+    <div class="note-card">
+      <h4>📋 案件管理一覧 記入タイミング</h4>
+      <table>
+        <tr><td>STEP 1</td><td>新規行追加・ステータス=初回接触</td></tr>
+        <tr><td>STEP 2</td><td>事業モデル・優先度・担当を入力</td></tr>
+        <tr><td>STEP 4</td><td>ステータス=先方興味あり</td></tr>
+        <tr><td>STEP 5</td><td>最新資料リンク・ステータス=商談中</td></tr>
+        <tr><td>STEP 6</td><td>ステータス=契約交渉中</td></tr>
+        <tr><td>STEP 9</td><td>受注=◯・ステータス=契約済</td></tr>
+        <tr><td>STEP 12</td><td>ステータス=稼働中</td></tr>
+        <tr><td>随時</td><td>最終コンタクト日・コンタクト備考</td></tr>
+      </table>
+    </div>
+
+    <div class="note-card">
+      <h4>📢 PR・数値報告タイムライン</h4>
+      <table>
+        <tr><td>N-28〜</td><td>制作物確認・担当者決め・概要作成</td></tr>
+        <tr><td>N-21〜</td><td>制作物の制作開始（LP・ポスター等）</td></tr>
+        <tr><td>N-14〜</td><td>PRリリース原稿作成・先方確認</td></tr>
+        <tr><td>N日</td><td>ローンチ・キャンペーン開始</td></tr>
+        <tr><td>N+1</td><td>プレスリリース配信（目安）</td></tr>
+        <tr><td>N+1〜3</td><td>初動モニタリング（PV・申込数・SNS）</td></tr>
+        <tr><td>N+30</td><td>初回数値報告（先方へ共有）</td></tr>
+        <tr><td>月次</td><td>KPIレポート送付・請求書発行</td></tr>
+        <tr><td>四半期</td><td>数値報告MTG・振り返り</td></tr>
+        <tr><td>半年〜</td><td>契約更新・アップセル検討</td></tr>
+      </table>
+    </div>
+
+    <div class="note-card">
+      <h4>📁 契約書類台帳 書類要否（契約パターン別）</h4>
+      <table>
+        <tr><td>書類</td><td>①有償</td></tr>
+        <tr><td>履歴事項全部証明</td><td>◯</td></tr>
+        <tr><td>取引申請書</td><td>◯</td></tr>
+        <tr><td>口座情報</td><td>◯</td></tr>
+        <tr><td>セキュリティCSS</td><td>◯（患者データ取扱時）</td></tr>
+        <tr><td>NDA</td><td>◯</td></tr>
+        <tr><td>料金覚書</td><td>◯</td></tr>
+        <tr><td>BPO定義書</td><td>BPO案件のみ</td></tr>
+        <tr><td>SLA</td><td>必要時</td></tr>
+        <tr><td>契約書（本契約）</td><td>必要時</td></tr>
+      </table>
+      <p style="font-size:9px;color:#888;margin-top:4px;">※無料検証・NDAのみの場合、金銭系書類は「―（該当なし）」</p>
+      <h4 style="margin-top:10px;">✍️ クラウドサイン メモ</h4>
+      <table>
+        <tr><td>送付前</td><td>送付先メアド・氏名を必ず確認</td></tr>
+        <tr><td>文面</td><td>テンプレ使用（企業：様／医院：院長先生）</td></tr>
+        <tr><td>確認</td><td>締結完了通知メールで確認</td></tr>
+        <tr><td>台帳</td><td>締結完了後すぐに◯に更新</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
